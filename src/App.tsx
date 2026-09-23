@@ -14,8 +14,9 @@ import { AdminConsoleModal } from './components/AdminConsoleModal';
 import { AuthModal } from './components/AuthModal';
 import { FilterDrawerModal } from './components/FilterDrawerModal';
 import { MobileBottomNav } from './components/MobileBottomNav';
+import { DiscoveryHub } from './components/DiscoveryHub';
 import { ActiveTimerOverlay, ActiveTimer } from './components/ActiveTimerOverlay';
-import { Sparkles, Compass, ChefHat, BookOpen, Layers } from 'lucide-react';
+import { Sparkles, Compass, ChefHat, BookOpen, Layers, ArrowLeft } from 'lucide-react';
 
 function AppContent() {
   const {
@@ -49,6 +50,10 @@ function AppContent() {
   const [sortBy, setSortBy] = useState<'recommended' | 'time' | 'title' | 'country'>('recommended');
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
+  // Paginated Discovery State (Eliminates mobile lag and endless scrolling)
+  const [showAllDishes, setShowAllDishes] = useState(false);
+  const [visibleRecipeCount, setVisibleRecipeCount] = useState(12);
+
   // Modals & Drawers state
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isAIChefOpen, setIsAIChefOpen] = useState(false);
@@ -71,6 +76,10 @@ function AppContent() {
   const handleStartTimer = (timer: ActiveTimer) => {
     setActiveTimers(prev => [timer, ...prev]);
   };
+
+  // Pre-filtered subsets for discovery carousels
+  const starterRecipes = useMemo(() => ALL_RECIPES.filter(r => r.isStarter), []);
+  const quickRecipes = useMemo(() => ALL_RECIPES.filter(r => r.totalTime <= 30), []);
 
   // Memoized continent recipe counts
   const continentCounts = useMemo(() => {
@@ -105,6 +114,31 @@ function AppContent() {
     return count;
   }, [selectedContinent, starterOnly, offlineOnly, quickTimeFilter, selectedDietary, selectedDifficulty, selectedMealType, sortBy]);
 
+  // Is user actively filtering/searching or requested full browse?
+  const isFilteringOrSearching = useMemo(() => {
+    return (
+      selectedContinent !== 'All' ||
+      searchQuery.trim() !== '' ||
+      starterOnly ||
+      offlineOnly ||
+      quickTimeFilter !== null ||
+      selectedDietary.length > 0 ||
+      selectedDifficulty !== 'All' ||
+      selectedMealType !== 'All' ||
+      showAllDishes
+    );
+  }, [
+    selectedContinent,
+    searchQuery,
+    starterOnly,
+    offlineOnly,
+    quickTimeFilter,
+    selectedDietary.length,
+    selectedDifficulty,
+    selectedMealType,
+    showAllDishes
+  ]);
+
   // Reset all filters
   const handleResetAllFilters = () => {
     setSearchQuery('');
@@ -116,16 +150,26 @@ function AppContent() {
     setSelectedDifficulty('All');
     setSelectedMealType('All');
     setSortBy('recommended');
+    setShowAllDishes(false);
+    setVisibleRecipeCount(12);
+  };
+
+  const handleSelectContinentFromHub = (continent: Continent) => {
+    setSelectedContinent(continent);
+    setVisibleRecipeCount(12);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleToggleDietary = (tag: string) => {
     setSelectedDietary(prev => 
       prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
     );
+    setVisibleRecipeCount(12);
   };
 
   const handleRemoveDietary = (tag: string) => {
     setSelectedDietary(prev => prev.filter(t => t !== tag));
+    setVisibleRecipeCount(12);
   };
 
   // Filter recipes
@@ -239,8 +283,8 @@ function AppContent() {
               continentCounts={continentCounts}
             />
 
-            {/* Phase 8: Personalized Recommendations Section */}
-            {searchQuery === '' && selectedContinent === 'All' && !starterOnly && !offlineOnly && !quickTimeFilter && selectedDietary.length === 0 && recommendedRecipes.length > 0 && (
+            {/* Phase 8: Personalized Recommendations Section (shown when on main portal) */}
+            {!isFilteringOrSearching && recommendedRecipes.length > 0 && (
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -277,50 +321,153 @@ function AppContent() {
               </div>
             )}
 
-            {/* Recipe Grid */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-              {filteredRecipes.length === 0 ? (
-                <div className="text-center py-20 rounded-3xl bg-stone-900/30 border border-stone-800 space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-stone-800 text-amber-400 flex items-center justify-center mx-auto">
-                    <BookOpen className="w-6 h-6" />
+            {/* View Branch 1: VISUAL DISCOVERY HUB (Select continent/category first) */}
+            {!isFilteringOrSearching && (
+              <DiscoveryHub
+                onSelectContinent={handleSelectContinentFromHub}
+                onSelectStarterOnly={() => {
+                  setStarterOnly(true);
+                  setVisibleRecipeCount(12);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onSelectQuickTime={(time) => {
+                  setQuickTimeFilter(time);
+                  setVisibleRecipeCount(12);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onViewAllRecipes={() => {
+                  setShowAllDishes(true);
+                  setVisibleRecipeCount(12);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                onSelectRecipe={(r) => setSelectedRecipe(r)}
+                continentCounts={continentCounts}
+                starterRecipes={starterRecipes}
+                quickRecipes={quickRecipes}
+                favorites={favorites}
+                downloadedRecipeIds={downloadedRecipeIds}
+                isPremium={isPremium}
+                onToggleFavorite={(id, e) => {
+                  e.stopPropagation();
+                  toggleFavorite(id);
+                }}
+                onDownload={(id, e) => {
+                  e.stopPropagation();
+                  downloadRecipe(id);
+                }}
+                onOpenUnlockModal={() => setIsUnlockOpen(true)}
+              />
+            )}
+
+            {/* View Branch 2: PAGINATED RECIPE GRID (Active search/continent view) */}
+            {isFilteringOrSearching && (
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                {/* Result header & Back to Continents Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-stone-800/80 mb-6">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-serif text-2xl sm:text-3xl font-bold text-stone-100">
+                        {selectedContinent !== 'All' 
+                          ? `${selectedContinent} Recipes`
+                          : searchQuery.trim() 
+                          ? `Results for "${searchQuery}"`
+                          : starterOnly
+                          ? '50 Free Starter Dishes'
+                          : quickTimeFilter
+                          ? `Quick Meals (≤ ${quickTimeFilter} mins)`
+                          : 'Complete Global Cookbook'}
+                      </h2>
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-bold">
+                        {filteredRecipes.length}
+                      </span>
+                    </div>
+                    <p className="text-xs text-stone-400 mt-1">
+                      {selectedContinent !== 'All'
+                        ? `Explore regional dishes from ${selectedContinent}.`
+                        : `Showing filtered selections from 50+ countries.`}
+                    </p>
                   </div>
-                  <h3 className="font-serif text-xl font-bold text-stone-200">
-                    No recipes match your criteria
-                  </h3>
-                  <p className="text-xs text-stone-400 max-w-sm mx-auto">
-                    Try clearing your search query or removing filters to browse all 300+ global recipes.
-                  </p>
+
                   <button
                     onClick={handleResetAllFilters}
-                    className="px-4 py-2 rounded-xl bg-amber-500 text-stone-950 text-xs font-bold"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-white border border-stone-800 text-xs font-semibold self-start sm:self-auto transition-all min-h-[40px]"
                   >
-                    Reset Filters
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back to Continents Hub</span>
                   </button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredRecipes.map((recipe) => (
-                    <RecipeCard
-                      key={recipe.recipeId}
-                      recipe={recipe}
-                      isFavorite={favorites.has(recipe.recipeId)}
-                      isDownloaded={downloadedRecipeIds.has(recipe.recipeId)}
-                      isPremiumUser={isPremium}
-                      onSelect={(r) => setSelectedRecipe(r)}
-                      onToggleFavorite={(id, e) => {
-                        e.stopPropagation();
-                        toggleFavorite(id);
-                      }}
-                      onDownload={(id, e) => {
-                        e.stopPropagation();
-                        downloadRecipe(id);
-                      }}
-                      onOpenUnlockModal={() => setIsUnlockOpen(true)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+
+                {filteredRecipes.length === 0 ? (
+                  <div className="text-center py-20 rounded-3xl bg-stone-900/30 border border-stone-800 space-y-3">
+                    <div className="w-12 h-12 rounded-2xl bg-stone-800 text-amber-400 flex items-center justify-center mx-auto">
+                      <BookOpen className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-serif text-xl font-bold text-stone-200">
+                      No recipes match your criteria
+                    </h3>
+                    <p className="text-xs text-stone-400 max-w-sm mx-auto">
+                      Try clearing your search query or removing filters to browse all 300+ global recipes.
+                    </p>
+                    <button
+                      onClick={handleResetAllFilters}
+                      className="px-4 py-2.5 rounded-xl bg-amber-500 text-stone-950 text-xs font-bold shadow-lg min-h-[44px]"
+                    >
+                      Reset Filters
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    {/* Paginated Card Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                      {filteredRecipes.slice(0, visibleRecipeCount).map((recipe) => (
+                        <RecipeCard
+                          key={recipe.recipeId}
+                          recipe={recipe}
+                          isFavorite={favorites.has(recipe.recipeId)}
+                          isDownloaded={downloadedRecipeIds.has(recipe.recipeId)}
+                          isPremiumUser={isPremium}
+                          onSelect={(r) => setSelectedRecipe(r)}
+                          onToggleFavorite={(id, e) => {
+                            e.stopPropagation();
+                            toggleFavorite(id);
+                          }}
+                          onDownload={(id, e) => {
+                            e.stopPropagation();
+                            downloadRecipe(id);
+                          }}
+                          onOpenUnlockModal={() => setIsUnlockOpen(true)}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Pagination / Load More Controls */}
+                    {visibleRecipeCount < filteredRecipes.length && (
+                      <div className="mt-10 pt-6 border-t border-stone-800/80 text-center space-y-3 pb-8">
+                        <p className="text-xs text-stone-400 font-mono">
+                          Showing {Math.min(visibleRecipeCount, filteredRecipes.length)} of {filteredRecipes.length} recipes
+                        </p>
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                          <button
+                            onClick={() => setVisibleRecipeCount((prev) => prev + 12)}
+                            className="px-6 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs sm:text-sm shadow-xl shadow-amber-500/20 active:scale-95 transition-all min-h-[46px]"
+                          >
+                            Show 12 More Dishes (+12)
+                          </button>
+                          {filteredRecipes.length > visibleRecipeCount + 12 && (
+                            <button
+                              onClick={() => setVisibleRecipeCount(filteredRecipes.length)}
+                              className="px-5 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-stone-300 font-semibold text-xs transition-all border border-stone-800 min-h-[46px]"
+                            >
+                              Show All ({filteredRecipes.length})
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

@@ -11,8 +11,7 @@ import {
   CreditCard, 
   Zap,
   ArrowRight,
-  ArrowLeft,
-  Shield
+  ArrowLeft
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../context/AuthContext';
@@ -21,13 +20,11 @@ import { PaystackService } from '../services/paystackService';
 interface WorldUnlockModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onOpenAdmin?: () => void;
 }
 
 export const WorldUnlockModal: React.FC<WorldUnlockModalProps> = ({
   isOpen,
-  onClose,
-  onOpenAdmin
+  onClose
 }) => {
   const { user, profile, isPremium, isAdmin, requestTestPremium, devFastUnlockPremium, applyEntitlement } = useAuth();
   const [loadingPaystack, setLoadingPaystack] = useState(false);
@@ -58,7 +55,13 @@ export const WorldUnlockModal: React.FC<WorldUnlockModalProps> = ({
     };
 
     window.addEventListener('popstate', handlePopState);
+
+    // Prevent background scrolling while modal is open
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     return () => {
+      document.body.style.overflow = originalOverflow;
       window.removeEventListener('popstate', handlePopState);
     };
   }, [isOpen, onClose]);
@@ -143,12 +146,12 @@ export const WorldUnlockModal: React.FC<WorldUnlockModalProps> = ({
     /* Backdrop: clicking backdrop calls onClose() seamlessly */
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-black/85 backdrop-blur-md flex justify-center items-start sm:items-center p-3 sm:p-6 py-6 sm:py-10 animate-in fade-in duration-200"
     >
       {/* Modal Dialog Card: clicking inside does not trigger backdrop close */}
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-xl bg-stone-950 rounded-3xl border border-stone-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150"
+        className="relative w-full max-w-xl bg-stone-950 rounded-3xl border border-stone-800 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150 my-auto sm:my-0"
       >
         
         {/* Top-Right Close Button with clear tooltip and hover state */}
@@ -273,23 +276,6 @@ export const WorldUnlockModal: React.FC<WorldUnlockModalProps> = ({
                     Request Tester Access
                   </button>
                 </form>
-
-                {/* Direct Link to Admin Console */}
-                {onOpenAdmin && (
-                  <div className="pt-3 flex justify-center">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onClose();
-                        onOpenAdmin();
-                      }}
-                      className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1.5 underline underline-offset-4 py-1 px-3 rounded-lg hover:bg-stone-900/80 transition-all"
-                    >
-                      <Shield className="w-3.5 h-3.5 text-red-400" />
-                      <span>Review & Approve Requests (Admin Console)</span>
-                    </button>
-                  </div>
-                )}
               </div>
 
               {/* Admin quick access for owner account */}

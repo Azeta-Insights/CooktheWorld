@@ -151,7 +151,12 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
     };
     window.addEventListener('popstate', handlePopState);
 
+    // Prevent background scrolling while modal is open
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     return () => {
+      document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('popstate', handlePopState);
     };
@@ -230,16 +235,96 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
     setTimeout(() => setAddedToListToast(false), 2500);
   };
 
+  // FULLSCREEN DISTRACTION-FREE COOKING MODE (Exclusively rendered to eliminate background bleeding)
+  if (isCookingMode) {
+    const currentStep = recipe.preparationSteps[activeStepIndex];
+    return (
+      <div className="fixed inset-0 z-50 bg-stone-950 text-stone-100 flex flex-col p-4 sm:p-8 animate-in fade-in duration-150 overflow-hidden select-none">
+        {/* Top bar with Step info, Timer and Close */}
+        <div className="flex items-center justify-between pb-4 border-b border-stone-800 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 truncate">
+            <span className="text-[11px] px-2.5 py-1 rounded-full bg-amber-500 text-stone-950 font-bold uppercase tracking-wider shrink-0">
+              Cooking Mode
+            </span>
+            <h3 className="font-serif text-sm sm:text-lg font-bold text-stone-100 truncate">
+              {recipe.title}
+            </h3>
+          </div>
+          <button
+            onClick={() => setIsCookingMode(false)}
+            aria-label="Exit cooking mode"
+            className="p-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0 ml-2"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Big Step Card */}
+        <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full py-6 space-y-6 overflow-y-auto">
+          <div className="flex items-center justify-between text-amber-400 font-mono text-xs sm:text-sm">
+            <span>STEP {activeStepIndex + 1} OF {recipe.preparationSteps.length}</span>
+            {currentStep?.timerMinutes && (
+              <button
+                onClick={() => handleStartStepTimer(currentStep.timerMinutes!, `Step ${activeStepIndex + 1}`)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/50 text-amber-300 font-bold text-xs"
+              >
+                <Clock className="w-4 h-4" />
+                <span>Start {currentStep.timerMinutes}m Timer</span>
+              </button>
+            )}
+          </div>
+
+          <p className="font-serif text-xl sm:text-3xl text-stone-100 leading-relaxed font-medium">
+            {currentStep?.instruction}
+          </p>
+
+          {currentStep?.tip && (
+            <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-800/40 text-xs sm:text-sm text-amber-300 flex items-start gap-3">
+              <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <span>{currentStep.tip}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Step Controls */}
+        <div className="flex items-center justify-between max-w-2xl mx-auto w-full pt-4 border-t border-stone-800 gap-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] shrink-0">
+          <button
+            disabled={activeStepIndex === 0}
+            onClick={() => setActiveStepIndex(Math.max(0, activeStepIndex - 1))}
+            className="flex-1 sm:flex-none px-5 py-3 rounded-2xl bg-stone-900 disabled:opacity-30 hover:bg-stone-800 text-stone-200 font-bold text-xs sm:text-sm min-h-[48px]"
+          >
+            Previous Step
+          </button>
+
+          <button
+            onClick={() => {
+              toggleCompleteStep(currentStep.stepNumber);
+              if (activeStepIndex < recipe.preparationSteps.length - 1) {
+                setActiveStepIndex(activeStepIndex + 1);
+              } else {
+                setIsCookingMode(false);
+                setShowCompletionModal(true);
+              }
+            }}
+            className="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs sm:text-sm shadow-xl min-h-[48px]"
+          >
+            {activeStepIndex === recipe.preparationSteps.length - 1 ? 'Finish & Stamp' : 'Next Step →'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 md:p-6 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 overflow-hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-0 sm:p-4 md:p-6 animate-in fade-in duration-200"
     >
       
       {/* Main Container */}
       <div 
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-4xl bg-stone-950 sm:rounded-3xl border border-stone-800 shadow-2xl overflow-hidden min-h-screen sm:min-h-0 sm:max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-4xl bg-stone-950 sm:rounded-3xl border-0 sm:border sm:border-stone-800 shadow-2xl overflow-hidden h-full sm:h-auto sm:max-h-[92vh] flex flex-col"
       >
         
         {/* Top Floating Control Bar */}
@@ -286,8 +371,8 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Scrollable Recipe Body */}
-        <div className="overflow-y-auto flex-1">
+        {/* Scrollable Recipe Body - Single smooth scroll container */}
+        <div className="overflow-y-auto flex-1 overscroll-contain pb-28 sm:pb-8">
           
           {/* Hero Image Section */}
           <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full bg-stone-900">
@@ -635,81 +720,6 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
             </div>
           </div>
         </div>
-
-        {/* DISTRACTION-FREE COOKING MODE OVERLAY */}
-        {isCookingMode && (
-          <div className="fixed inset-0 z-50 bg-stone-950 flex flex-col p-6 sm:p-12 animate-in fade-in duration-150">
-            <div className="flex items-center justify-between pb-6 border-b border-stone-800">
-              <div className="flex items-center gap-3">
-                <span className="text-xs px-3 py-1 rounded-full bg-amber-500 text-stone-950 font-bold uppercase tracking-wider">
-                  Cooking Mode
-                </span>
-                <h3 className="font-serif text-lg sm:text-xl font-bold text-stone-100 truncate">
-                  {recipe.title}
-                </h3>
-              </div>
-              <button
-                onClick={() => setIsCookingMode(false)}
-                className="p-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Current Step Big Typography */}
-            <div className="flex-1 flex flex-col justify-center max-w-3xl mx-auto w-full py-8 space-y-6">
-              <div className="flex items-center justify-between text-amber-400 font-mono text-sm">
-                <span>STEP {activeStepIndex + 1} OF {recipe.preparationSteps.length}</span>
-                {recipe.preparationSteps[activeStepIndex]?.timerMinutes && (
-                  <button
-                    onClick={() => handleStartStepTimer(recipe.preparationSteps[activeStepIndex].timerMinutes!, `Step ${activeStepIndex + 1}`)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/50 text-amber-300 font-bold text-xs"
-                  >
-                    <Clock className="w-4 h-4" />
-                    <span>Start {recipe.preparationSteps[activeStepIndex].timerMinutes}m Timer</span>
-                  </button>
-                )}
-              </div>
-
-              <p className="font-serif text-2xl sm:text-4xl text-stone-100 leading-relaxed">
-                {recipe.preparationSteps[activeStepIndex]?.instruction}
-              </p>
-
-              {recipe.preparationSteps[activeStepIndex]?.tip && (
-                <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-800/40 text-sm text-amber-300 flex items-start gap-3">
-                  <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-                  <span>{recipe.preparationSteps[activeStepIndex].tip}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Step Controls */}
-            <div className="flex items-center justify-between max-w-3xl mx-auto w-full pt-6 border-t border-stone-800">
-              <button
-                disabled={activeStepIndex === 0}
-                onClick={() => setActiveStepIndex(Math.max(0, activeStepIndex - 1))}
-                className="px-6 py-3 rounded-2xl bg-stone-900 disabled:opacity-30 hover:bg-stone-800 text-stone-200 font-bold text-sm"
-              >
-                Previous Step
-              </button>
-
-              <button
-                onClick={() => {
-                  toggleCompleteStep(recipe.preparationSteps[activeStepIndex].stepNumber);
-                  if (activeStepIndex < recipe.preparationSteps.length - 1) {
-                    setActiveStepIndex(activeStepIndex + 1);
-                  } else {
-                    setIsCookingMode(false);
-                    setShowCompletionModal(true);
-                  }
-                }}
-                className="px-8 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-sm shadow-xl"
-              >
-                {activeStepIndex === recipe.preparationSteps.length - 1 ? 'Finish & Stamp Passport' : 'Next Step →'}
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* "I COOKED THIS" COMPLETION & RATING MODAL */}
         {showCompletionModal && (
