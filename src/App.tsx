@@ -23,6 +23,7 @@ function AppContent() {
     isOnline,
     favorites,
     passport,
+    cookingHistory,
     downloadedRecipeIds,
     toggleFavorite,
     recordCookedRecipe,
@@ -76,6 +77,33 @@ function AppContent() {
     return searchAndFilterRecipes(ALL_RECIPES, options, downloadedRecipeIds);
   }, [searchQuery, selectedContinent, starterOnly, offlineOnly, quickTimeFilter, profile?.preferences?.dietary, downloadedRecipeIds]);
 
+  // Phase 8: Personalization Engine & Recommendations
+  const recommendedRecipes = useMemo(() => {
+    const dietaryPrefs = profile?.preferences?.dietary || [];
+    const cookedIds = new Set(cookingHistory.map(h => h.recipeId));
+    const cookedContinents = new Set(cookingHistory.map(h => h.continent));
+
+    const candidates = ALL_RECIPES.filter(r => !cookedIds.has(r.recipeId));
+
+    return candidates
+      .map(r => {
+        let score = 0;
+        if (dietaryPrefs.some(d => r.dietaryTags.some(tag => tag.toLowerCase().includes(d.toLowerCase())))) {
+          score += 5;
+        }
+        if (cookedContinents.has(r.continent)) {
+          score += 3;
+        }
+        if (r.isStarter) {
+          score += 2;
+        }
+        return { recipe: r, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4)
+      .map(item => item.recipe);
+  }, [cookingHistory, profile?.preferences?.dietary]);
+
   const handleOpenChefWithRecipe = (recipe: Recipe, prompt?: string) => {
     setSelectedRecipe(recipe);
     setAiChefInitialPrompt(prompt);
@@ -125,6 +153,44 @@ function AppContent() {
               onSelectTimeFilter={setQuickTimeFilter}
               totalFilteredCount={filteredRecipes.length}
             />
+
+            {/* Phase 8: Personalized Recommendations Section */}
+            {searchQuery === '' && selectedContinent === 'All' && !starterOnly && !offlineOnly && !quickTimeFilter && recommendedRecipes.length > 0 && (
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    <h2 className="font-serif text-lg sm:text-xl font-bold text-stone-100">
+                      {cookingHistory.length > 0 ? 'Curated Next For You' : 'Chef’s Recommended Starter Dishes'}
+                    </h2>
+                  </div>
+                  <span className="text-xs text-stone-400">
+                    {profile?.preferences?.dietary?.length ? `Filtered for ${profile.preferences.dietary.join(', ')}` : 'Handpicked for your kitchen'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-6 border-b border-stone-800/80">
+                  {recommendedRecipes.map((recipe) => (
+                    <RecipeCard
+                      key={`rec-${recipe.recipeId}`}
+                      recipe={recipe}
+                      isFavorite={favorites.has(recipe.recipeId)}
+                      isDownloaded={downloadedRecipeIds.has(recipe.recipeId)}
+                      isPremiumUser={isPremium}
+                      onSelect={(r) => setSelectedRecipe(r)}
+                      onToggleFavorite={(id, e) => {
+                        e.stopPropagation();
+                        toggleFavorite(id);
+                      }}
+                      onDownload={(id, e) => {
+                        e.stopPropagation();
+                        downloadRecipe(id);
+                      }}
+                      onOpenUnlockModal={() => setIsUnlockOpen(true)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Recipe Grid */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

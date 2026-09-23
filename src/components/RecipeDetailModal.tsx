@@ -19,7 +19,10 @@ import {
   ChefHat,
   RotateCcw,
   Star,
-  Check
+  Check,
+  Camera,
+  Trash2,
+  Image as ImageIcon
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { Recipe, Ingredient } from '../types/recipe';
@@ -42,6 +45,7 @@ interface RecipeDetailModalProps {
     servingsCooked: number;
     rating: number;
     notes?: string;
+    photoUrl?: string;
   }) => void;
   onStartTimer: (timer: ActiveTimer) => void;
   onOpenChefWithRecipe: (recipe: Recipe, prompt?: string) => void;
@@ -78,7 +82,52 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [userRating, setUserRating] = useState(5);
   const [cookingNotes, setCookingNotes] = useState('');
+  const [mealPhoto, setMealPhoto] = useState<string | null>(null);
+  const [isCompressingPhoto, setIsCompressingPhoto] = useState(false);
   const [hasRecordedCompletion, setHasRecordedCompletion] = useState(false);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsCompressingPhoto(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+          setMealPhoto(compressedDataUrl);
+        }
+        setIsCompressingPhoto(false);
+      };
+      img.onerror = () => setIsCompressingPhoto(false);
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => setIsCompressingPhoto(false);
+    reader.readAsDataURL(file);
+  };
 
   // Added to shopping list toast state
   const [addedToListToast, setAddedToListToast] = useState(false);
@@ -167,7 +216,8 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
       continent: recipe.continent,
       servingsCooked: servings,
       rating: userRating,
-      notes: cookingNotes
+      notes: cookingNotes,
+      photoUrl: mealPhoto || undefined
     });
 
     setHasRecordedCompletion(true);
@@ -701,9 +751,55 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
                   value={cookingNotes}
                   onChange={(e) => setCookingNotes(e.target.value)}
                   placeholder="e.g. Added extra garlic, cooked for 5 minutes less, family loved it..."
-                  rows={3}
+                  rows={2}
                   className="w-full p-3 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 placeholder-stone-600 focus:outline-none focus:border-amber-500"
                 />
+              </div>
+
+              {/* Meal Photo (Phase 7) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Dish Photo (optional)</span>
+                  </span>
+                  {mealPhoto && (
+                    <button
+                      type="button"
+                      onClick={() => setMealPhoto(null)}
+                      className="text-[11px] text-red-400 hover:text-red-300 flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                </label>
+
+                {mealPhoto ? (
+                  <div className="relative rounded-2xl overflow-hidden border border-amber-500/40 h-28 bg-stone-950">
+                    <img
+                      src={mealPhoto}
+                      alt="Cooked Dish"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-[10px] font-medium text-amber-300">
+                      Photo captured
+                    </div>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex items-center justify-center gap-2 p-3.5 rounded-2xl border border-dashed border-stone-700 hover:border-amber-500/60 bg-stone-950/60 hover:bg-stone-950 transition-all text-xs text-stone-400 hover:text-stone-200">
+                    <Camera className="w-4 h-4 text-amber-400" />
+                    <span>{isCompressingPhoto ? 'Optimizing photo...' : 'Snap or upload your finished dish'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handlePhotoSelect}
+                      disabled={isCompressingPhoto}
+                      className="hidden"
+                    />
+                  </label>
+                )}
               </div>
 
               <div className="flex items-center gap-3">

@@ -13,7 +13,13 @@ import {
   HardDrive, 
   Clock, 
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  TrendingUp,
+  Globe,
+  Award,
+  Sparkles,
+  Camera,
+  Compass
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Recipe, ShoppingItem } from '../types/recipe';
@@ -46,7 +52,7 @@ export const MyKitchenView: React.FC<MyKitchenViewProps> = ({
     downloadAllPremiumRecipes
   } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'history' | 'shopping' | 'offline' | 'favorites' | 'preferences'>('history');
+  const [activeTab, setActiveTab] = useState<'history' | 'insights' | 'shopping' | 'offline' | 'favorites' | 'preferences'>('history');
 
   // Custom shopping item state
   const [newIngredientName, setNewIngredientName] = useState('');
@@ -125,6 +131,18 @@ export const MyKitchenView: React.FC<MyKitchenViewProps> = ({
           >
             <History className="w-3.5 h-3.5" />
             History ({cookingHistory.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('insights')}
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              activeTab === 'insights'
+                ? 'bg-amber-500 text-stone-950 font-bold shadow-md'
+                : 'text-stone-400 hover:text-stone-200'
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            Insights
           </button>
 
           <button
@@ -226,6 +244,21 @@ export const MyKitchenView: React.FC<MyKitchenViewProps> = ({
                       </div>
                     </div>
 
+                    {/* Meal Photo (Phase 7) */}
+                    {item.photoUrl && (
+                      <div className="relative rounded-2xl overflow-hidden border border-stone-800 h-40 bg-stone-950">
+                        <img
+                          src={item.photoUrl}
+                          alt={item.recipeTitle}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-sm text-[10px] font-medium text-amber-300 flex items-center gap-1 border border-stone-700/50">
+                          <Camera className="w-3 h-3 text-amber-400" />
+                          <span>My Kitchen Creation</span>
+                        </div>
+                      </div>
+                    )}
+
                     {item.notes && (
                       <p className="text-xs text-stone-300 italic bg-stone-950/60 p-3 rounded-xl border border-stone-800/80">
                         "{item.notes}"
@@ -254,7 +287,110 @@ export const MyKitchenView: React.FC<MyKitchenViewProps> = ({
         </div>
       )}
 
-      {/* 2. SHOPPING LIST TAB */}
+      {/* 2. INSIGHTS TAB (Phase 8) */}
+      {activeTab === 'insights' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="font-serif text-xl font-bold text-stone-100">
+              Culinary Intelligence & Kitchen Insights
+            </h2>
+            <p className="text-xs text-stone-400 mt-0.5">
+              Personalized analytics computed from your global cooking journey and tasting notes.
+            </p>
+          </div>
+
+          {/* Top Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-5 rounded-3xl bg-stone-900/80 border border-stone-800 space-y-2">
+              <div className="flex items-center justify-between text-amber-400">
+                <span className="text-xs font-semibold text-stone-400">Passport Rank</span>
+                <Award className="w-5 h-5" />
+              </div>
+              <div className="font-serif text-2xl font-bold text-stone-100">
+                {cookingHistory.length === 0 ? 'Novice Traveler' :
+                 cookingHistory.length < 5 ? 'Curious Cook' :
+                 cookingHistory.length < 15 ? 'Kitchen Adventurer' :
+                 'Global Master Chef'}
+              </div>
+              <p className="text-[11px] text-stone-400">
+                {cookingHistory.length} dishes prepared across {Object.keys(useAuth().passport).length} countries
+              </p>
+            </div>
+
+            <div className="p-5 rounded-3xl bg-stone-900/80 border border-stone-800 space-y-2">
+              <div className="flex items-center justify-between text-amber-400">
+                <span className="text-xs font-semibold text-stone-400">Continents Tasted</span>
+                <Globe className="w-5 h-5" />
+              </div>
+              <div className="font-serif text-2xl font-bold text-stone-100">
+                {new Set(cookingHistory.map(h => h.continent)).size} / 6
+              </div>
+              <p className="text-[11px] text-stone-400">
+                Global culinary reach across continents
+              </p>
+            </div>
+
+            <div className="p-5 rounded-3xl bg-stone-900/80 border border-stone-800 space-y-2">
+              <div className="flex items-center justify-between text-amber-400">
+                <span className="text-xs font-semibold text-stone-400">Average Rating</span>
+                <Star className="w-5 h-5 fill-amber-400" />
+              </div>
+              <div className="font-serif text-2xl font-bold text-stone-100">
+                {cookingHistory.length > 0
+                  ? (cookingHistory.reduce((acc, h) => acc + h.rating, 0) / cookingHistory.length).toFixed(1)
+                  : '5.0'} <span className="text-sm font-sans text-stone-400 font-normal">/ 5.0</span>
+              </div>
+              <p className="text-[11px] text-stone-400">
+                Based on your logged tasting reviews
+              </p>
+            </div>
+
+            <div className="p-5 rounded-3xl bg-stone-900/80 border border-stone-800 space-y-2">
+              <div className="flex items-center justify-between text-amber-400">
+                <span className="text-xs font-semibold text-stone-400">Dishes Photographed</span>
+                <Camera className="w-5 h-5" />
+              </div>
+              <div className="font-serif text-2xl font-bold text-stone-100">
+                {cookingHistory.filter(h => h.photoUrl).length}
+              </div>
+              <p className="text-[11px] text-stone-400">
+                Meal creations photographed & preserved
+              </p>
+            </div>
+          </div>
+
+          {/* Continent Breakdown Progress */}
+          <div className="p-6 rounded-3xl bg-stone-900/70 border border-stone-800 space-y-4">
+            <h3 className="font-serif text-lg font-bold text-stone-200 flex items-center gap-2">
+              <Compass className="w-4 h-4 text-amber-400" />
+              <span>Continental Exploration Progress</span>
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
+              {(['Africa', 'Asia', 'Europe', 'Americas', 'Middle East', 'Oceania'] as const).map((cont) => {
+                const count = cookingHistory.filter(h => h.continent === cont).length;
+                const percentage = Math.min(100, Math.round((count / 10) * 100));
+                return (
+                  <div key={cont} className="p-4 rounded-2xl bg-stone-950/70 border border-stone-800 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-stone-200">{cont}</span>
+                      <span className="font-mono text-amber-400">{count} cooked</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-stone-800 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.max(count > 0 ? 15 : 0, percentage)}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. SHOPPING LIST TAB */}
       {activeTab === 'shopping' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
