@@ -144,15 +144,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden lg:inline">{isOnline ? 'Online' : 'Offline Mode'}</span>
             </div>
 
-            {/* Admin Console Link (if admin) */}
+            {/* Admin Console Link (visible only when logged in as admin) */}
             {isAdmin && (
               <button
                 onClick={onOpenAdmin}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800/70 text-xs font-semibold transition-colors"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-red-950/80 hover:bg-red-900 text-red-200 border border-red-700/80 text-xs font-bold transition-all shadow-md shadow-red-950/40"
                 title="Open Admin Console (Tester Requests & Recipe Insights)"
               >
                 <Shield className="w-3.5 h-3.5 text-red-400" />
-                Admin
+                <span>Admin</span>
               </button>
             )}
 
@@ -198,11 +198,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div className="px-4 py-2 border-b border-stone-800">
                       <p className="text-xs font-semibold text-stone-200 truncate">{user.displayName || 'Cook The World Chef'}</p>
                       <p className="text-[11px] text-stone-400 truncate">{user.email}</p>
-                      <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        isPremium ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-stone-800 text-stone-400'
-                      }`}>
-                        {isPremium ? 'Lifetime World Pass' : 'Free Explorer'}
-                      </span>
+                      <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                        <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isPremium ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-stone-800 text-stone-400'
+                        }`}>
+                          {isPremium ? 'Lifetime World Pass' : 'Free Explorer'}
+                        </span>
+                        {isAdmin && (
+                          <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-950 text-red-300 border border-red-800/80">
+                            App Admin
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <button
@@ -232,10 +239,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {isAdmin && (
                       <button
                         onClick={onOpenAdmin}
-                        className="w-full text-left px-4 py-2 text-xs text-red-400 hover:bg-red-950/40 flex items-center gap-2.5"
+                        className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-300 bg-red-950/40 hover:bg-red-900/60 flex items-center justify-between border-y border-red-900/40 transition-colors my-1"
                       >
-                        <Shield className="w-3.5 h-3.5 text-red-400" />
-                        Admin Console
+                        <div className="flex items-center gap-2.5">
+                          <Shield className="w-3.5 h-3.5 text-red-400" />
+                          <span>Admin Console</span>
+                        </div>
+                        <span className="text-[10px] text-red-400 font-mono">Approve</span>
                       </button>
                     )}
 

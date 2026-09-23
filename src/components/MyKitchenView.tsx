@@ -19,7 +19,8 @@ import {
   Award,
   Sparkles,
   Camera,
-  Compass
+  Compass,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Recipe, ShoppingItem } from '../types/recipe';
@@ -29,11 +30,13 @@ import { OfflineStorageService } from '../services/offlineStorage';
 interface MyKitchenViewProps {
   onSelectRecipe: (recipe: Recipe) => void;
   onOpenUnlockModal: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const MyKitchenView: React.FC<MyKitchenViewProps> = ({
   onSelectRecipe,
-  onOpenUnlockModal
+  onOpenUnlockModal,
+  onOpenAdmin
 }) => {
   const {
     user,
@@ -107,16 +110,28 @@ export const MyKitchenView: React.FC<MyKitchenViewProps> = ({
       
       {/* Header Banner */}
       <div className="rounded-3xl bg-stone-900/90 border border-stone-800 p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">
-            Personal Culinary Workspace
-          </span>
-          <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-100">
-            My Kitchen
-          </h1>
-          <p className="text-xs sm:text-sm text-stone-400">
-            Manage your cooking records, offline recipe storage, shopping list, and flavor profile.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">
+              Personal Culinary Workspace
+            </span>
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-100">
+              My Kitchen
+            </h1>
+            <p className="text-xs sm:text-sm text-stone-400">
+              Manage your cooking records, offline recipe storage, shopping list, and flavor profile.
+            </p>
+          </div>
+
+          {onOpenAdmin && (
+            <button
+              onClick={onOpenAdmin}
+              className="self-start sm:self-auto px-4 py-2 rounded-2xl bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800/70 text-xs font-semibold flex items-center gap-2 shadow-lg transition-all"
+            >
+              <Shield className="w-4 h-4 text-red-400" />
+              <span>Admin Approvals</span>
+            </button>
+          )}
         </div>
 
         {/* Tab Switcher Pills */}

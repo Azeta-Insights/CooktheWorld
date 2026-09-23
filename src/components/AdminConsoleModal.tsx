@@ -10,12 +10,14 @@ import {
   TrendingUp, 
   Database,
   BarChart3,
-  Search
+  Search,
+  Plus
 } from 'lucide-react';
-import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, setDoc, query, orderBy } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { PremiumRequest } from '../types/recipe';
 import { ALL_RECIPES, ALL_STARTER_RECIPES } from '../data/recipes';
+import { useAuth } from '../context/AuthContext';
 
 interface AdminConsoleModalProps {
   isOpen: boolean;
@@ -26,12 +28,44 @@ export const AdminConsoleModal: React.FC<AdminConsoleModalProps> = ({
   isOpen,
   onClose
 }) => {
+  const { user, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<'requests' | 'insights' | 'metrics'>('requests');
   const [requests, setRequests] = useState<PremiumRequest[]>([]);
   const [insights, setInsights] = useState<any[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [loadingInsights, setLoadingInsights] = useState(true);
   const [actionMessage, setActionMessage] = useState('');
+
+  // Quick grant tester form state
+  const [quickTesterEmail, setQuickTesterEmail] = useState('');
+  const [quickTesterName, setQuickTesterName] = useState('');
+  const [isAddingTester, setIsAddingTester] = useState(false);
+
+  const handleQuickAddTester = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickTesterEmail.trim()) return;
+    setIsAddingTester(true);
+    try {
+      const testerId = `tester-${Date.now()}`;
+      const newReq: PremiumRequest = {
+        id: `req-${testerId}`,
+        userId: testerId,
+        name: quickTesterName.trim() || 'Direct Tester',
+        email: quickTesterEmail.trim().toLowerCase(),
+        requestedAt: new Date().toISOString(),
+        status: 'pending'
+      };
+      await setDoc(doc(db, 'premiumRequests', newReq.id), newReq);
+      setActionMessage(`Added request for ${quickTesterEmail}. Click Approve to grant access.`);
+      setQuickTesterEmail('');
+      setQuickTesterName('');
+      loadRequests();
+    } catch (err: any) {
+      setActionMessage(`Error: ${err.message}`);
+    } finally {
+      setIsAddingTester(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -180,6 +214,13 @@ export const AdminConsoleModal: React.FC<AdminConsoleModalProps> = ({
           </button>
         </div>
 
+        {/* Current Admin Account Status Banner */}
+        {!isAdmin && (
+          <div className="px-6 py-2.5 bg-amber-950/40 border-b border-amber-800/40 text-xs text-amber-300">
+            <strong>Admin Note:</strong> You are currently signed in as {user?.email || 'Guest'}. Please ensure you are signed in with <strong>blessing.waydiva@gmail.com</strong> so Firestore rules allow approving live tester documents.
+          </div>
+        )}
+
         {/* Tab Controls */}
         <div className="px-6 py-2.5 bg-stone-900/40 border-b border-stone-800 flex items-center gap-2">
           <button
@@ -236,6 +277,38 @@ export const AdminConsoleModal: React.FC<AdminConsoleModalProps> = ({
                   <RotateCcw className="w-3 h-3" />
                   Refresh
                 </button>
+              </div>
+
+              {/* Direct Grant / Add Tester Quick Form */}
+              <div className="p-4 rounded-2xl bg-stone-900/60 border border-stone-800 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-semibold text-stone-200">
+                  <Plus className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Directly Grant or Create Tester Access</span>
+                </div>
+                <form onSubmit={handleQuickAddTester} className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="email"
+                    value={quickTesterEmail}
+                    onChange={(e) => setQuickTesterEmail(e.target.value)}
+                    placeholder="Tester Email (e.g. tester@example.com)"
+                    required
+                    className="flex-1 py-2 px-3 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 placeholder-stone-600 focus:outline-none focus:border-amber-500"
+                  />
+                  <input
+                    type="text"
+                    value={quickTesterName}
+                    onChange={(e) => setQuickTesterName(e.target.value)}
+                    placeholder="Name (Optional)"
+                    className="sm:w-44 py-2 px-3 rounded-xl bg-stone-950 border border-stone-800 text-xs text-stone-200 placeholder-stone-600 focus:outline-none focus:border-amber-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isAddingTester}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold whitespace-nowrap shadow-md"
+                  >
+                    {isAddingTester ? 'Adding...' : 'Add Tester Request'}
+                  </button>
+                </form>
               </div>
 
               {requests.length === 0 ? (

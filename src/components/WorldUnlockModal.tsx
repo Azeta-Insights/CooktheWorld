@@ -11,7 +11,8 @@ import {
   CreditCard, 
   Zap,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Shield
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../context/AuthContext';
@@ -20,11 +21,13 @@ import { PaystackService } from '../services/paystackService';
 interface WorldUnlockModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const WorldUnlockModal: React.FC<WorldUnlockModalProps> = ({
   isOpen,
-  onClose
+  onClose,
+  onOpenAdmin
 }) => {
   const { user, profile, isPremium, isAdmin, requestTestPremium, devFastUnlockPremium, applyEntitlement } = useAuth();
   const [loadingPaystack, setLoadingPaystack] = useState(false);
@@ -270,6 +273,23 @@ export const WorldUnlockModal: React.FC<WorldUnlockModalProps> = ({
                     Request Tester Access
                   </button>
                 </form>
+
+                {/* Direct Link to Admin Console */}
+                {onOpenAdmin && (
+                  <div className="pt-3 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenAdmin();
+                      }}
+                      className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1.5 underline underline-offset-4 py-1 px-3 rounded-lg hover:bg-stone-900/80 transition-all"
+                    >
+                      <Shield className="w-3.5 h-3.5 text-red-400" />
+                      <span>Review & Approve Requests (Admin Console)</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Admin quick access for owner account */}

@@ -13,7 +13,7 @@ import { WorldUnlockModal } from './components/WorldUnlockModal';
 import { AdminConsoleModal } from './components/AdminConsoleModal';
 import { AuthModal } from './components/AuthModal';
 import { ActiveTimerOverlay, ActiveTimer } from './components/ActiveTimerOverlay';
-import { Sparkles, Compass, ChefHat, BookOpen, Layers } from 'lucide-react';
+import { Sparkles, Compass, ChefHat, BookOpen, Layers, Shield } from 'lucide-react';
 
 function AppContent() {
   const {
@@ -257,6 +257,7 @@ function AppContent() {
           <MyKitchenView
             onSelectRecipe={(r) => setSelectedRecipe(r)}
             onOpenUnlockModal={() => setIsUnlockOpen(true)}
+            onOpenAdmin={() => setIsAdminOpen(true)}
           />
         )}
       </main>
@@ -315,6 +316,7 @@ function AppContent() {
       <WorldUnlockModal
         isOpen={isUnlockOpen}
         onClose={() => setIsUnlockOpen(false)}
+        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
       {/* Admin Console Modal */}
@@ -344,7 +346,14 @@ function AppContent() {
             <span>•</span>
             <span>Offline Ready</span>
             <span>•</span>
-            <span>Paystack ₦2,500 Lifetime</span>
+            <button
+              onClick={() => setIsAdminOpen(true)}
+              className="hover:text-amber-400 text-stone-400 flex items-center gap-1 font-medium transition-colors"
+              title="Tester Approvals & Catalog Insights"
+            >
+              <Shield className="w-3.5 h-3.5 text-red-400" />
+              <span>Admin Approvals</span>
+            </button>
           </div>
         </div>
       </footer>
