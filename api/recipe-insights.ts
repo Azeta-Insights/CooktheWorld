@@ -1,14 +1,18 @@
-import { Request, Response } from 'express';
-import { handleGetRecipeInsights } from '../apiHandler';
-
-export default function handler(req: Request, res: Response) {
+export default async function handler(req: any, res: any) {
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+  );
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
-  return handleGetRecipeInsights(req, res);
+  return res.status(200).json({
+    totalQuestionsLogged: 0,
+    insights: []
+  });
 }
