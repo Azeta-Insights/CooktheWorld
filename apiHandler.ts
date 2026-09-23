@@ -181,16 +181,31 @@ CRITICAL GROUNDING RULES:
 
 // Paystack initialization endpoint
 export function handlePaystackInit(req: Request, res: Response) {
-  const { email, userId } = req.body;
+  const { email, userId } = req.body || {};
   const reference = `CTW-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
   
+  // Clean public key: trim spaces and surrounding quotes
+  let rawKey = (process.env.PAYSTACK_PUBLIC_KEY || '').trim().replace(/^["']|["']$/g, '');
+  
+  // Check if a Secret Key was mistakenly provided in PAYSTACK_PUBLIC_KEY
+  let keyError: string | null = null;
+  if (rawKey.startsWith('sk_')) {
+    keyError = "A Secret Key ('sk_...') was configured in PAYSTACK_PUBLIC_KEY. Please update Vercel Environment Variables with your Public Key ('pk_...').";
+    rawKey = '';
+  }
+
+  // Validate standard Paystack public key format: pk_live_... or pk_test_...
+  const isRealKey = /^(pk_live_|pk_test_)[a-zA-Z0-9]{20,}$/.test(rawKey);
+
   return res.json({
     success: true,
     amount: 250000, // ₦2,500 in kobo
     currency: 'NGN',
     reference,
     email: email || 'customer@cooktheworld.app',
-    publicKey: process.env.PAYSTACK_PUBLIC_KEY || 'demo_public_key',
+    publicKey: isRealKey ? rawKey : '',
+    isLiveKey: isRealKey,
+    keyError,
     metadata: {
       userId,
       plan: 'world_unlock_lifetime',
