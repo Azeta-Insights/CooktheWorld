@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#292524"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="40%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Circular background badge with warm gold rim -->
+  <circle cx="32" cy="32" r="30" fill="url(#bgGrad)" stroke="url(#goldGrad)" stroke-width="2.5"/>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#F59E0B" stroke-opacity="0.25" stroke-width="1" stroke-dasharray="2,2"/>
+
+  <!-- Subtle globe latitude & longitude lines -->
+  <ellipse cx="32" cy="32" rx="14" ry="24" fill="none" stroke="#F59E0B" stroke-opacity="0.25" stroke-width="1.2"/>
+  <line x1="8" y1="32" x2="56" y2="32" stroke="#F59E0B" stroke-opacity="0.25" stroke-width="1.2"/>
+  <path d="M 12 22 Q 32 28 52 22" fill="none" stroke="#F59E0B" stroke-opacity="0.2" stroke-width="1"/>
+  <path d="M 12 42 Q 32 36 52 42" fill="none" stroke="#F59E0B" stroke-opacity="0.2" stroke-width="1"/>
+
+  <!-- Chef Hat / Culinary Crown in Center -->
+  <g filter="url(#shadow)">
+    <!-- Chef Hat Base Band -->
+    <rect x="23" y="42" width="18" height="4.5" rx="2" fill="url(#goldGrad)" stroke="#B45309" stroke-width="0.75"/>
+    
+    <!-- Chef Hat Puffs / Top -->
+    <path d="M 23 42 
+             C 19 40, 18 33, 22 28 
+             C 21 23, 26 20, 32 20 
+             C 38 20, 43 23, 42 28 
+             C 46 33, 45 40, 41 42 
+             Z" 
+          fill="url(#goldGrad)" 
+          stroke="#B45309" 
+          stroke-width="0.75"/>
+    
+    <!-- Hat Pleats -->
+    <path d="M 27 28 Q 28 36 28 41" stroke="#92400E" stroke-width="1" stroke-linecap="round" fill="none"/>
+    <path d="M 32 24 Q 32 35 32 41" stroke="#92400E" stroke-width="1" stroke-linecap="round" fill="none"/>
+    <path d="M 37 28 Q 36 36 36 41" stroke="#92400E" stroke-width="1" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Sparkle stars representing global flavors -->
+  <path d="M 47 16 Q 48 18 50 19 Q 48 20 47 22 Q 46 20 44 19 Q 46 18 47 16 Z" fill="#FDE68A"/>
+  <circle cx="16" cy="18" r="1.5" fill="#FDE68A"/>
+  <circle cx="48" cy="46" r="1.2" fill="#F59E0B"/>
+</svg>

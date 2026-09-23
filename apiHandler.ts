@@ -190,7 +190,7 @@ export function handlePaystackInit(req: Request, res: Response) {
     currency: 'NGN',
     reference,
     email: email || 'customer@cooktheworld.app',
-    publicKey: process.env.PAYSTACK_PUBLIC_KEY || 'pk_test_cooktheworld_demo_key_2026',
+    publicKey: process.env.PAYSTACK_PUBLIC_KEY || 'demo_public_key',
     metadata: {
       userId,
       plan: 'world_unlock_lifetime',

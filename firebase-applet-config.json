@@ -1,7 +1,7 @@
 {
   "projectId": "cooktheworldapp",
   "appId": "1:65047850253:web:46062d01da6b55579b5444",
-  "apiKey": "AIzaSyAadw2hRhyL9F2Mivpo0WnQH9jmleUcfII",
+  "apiKey": "",
   "authDomain": "cooktheworldapp.firebaseapp.com",
   "firestoreDatabaseId": "ai-studio-acafaa41-8ab8-407e-85e5-e51ae1fea3fb",
   "storageBucket": "cooktheworldapp.firebasestorage.app",
