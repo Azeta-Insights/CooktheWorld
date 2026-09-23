@@ -69,13 +69,13 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
               <button
                 onClick={(e) => onDownload(recipe.recipeId, e)}
                 title={isOfflineReady ? 'Available Offline' : 'Download for Offline Cooking'}
-                className={`p-2 rounded-full backdrop-blur-md transition-all ${
+                className={`min-w-[40px] min-h-[40px] p-2 flex items-center justify-center rounded-full backdrop-blur-md transition-all active:scale-95 ${
                   isOfflineReady
                     ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-700/50'
                     : 'bg-stone-950/70 hover:bg-stone-900 text-stone-300 border border-stone-800'
                 }`}
               >
-                {isOfflineReady ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
+                {isOfflineReady ? <CheckCircle2 className="w-4 h-4" /> : <Download className="w-4 h-4" />}
               </button>
             )}
 
@@ -83,13 +83,13 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
             <button
               onClick={(e) => onToggleFavorite(recipe.recipeId, e)}
               title={isFavorite ? 'Remove from favorites' : 'Save to favorites'}
-              className={`p-2 rounded-full backdrop-blur-md transition-all ${
+              className={`min-w-[40px] min-h-[40px] p-2 flex items-center justify-center rounded-full backdrop-blur-md transition-all active:scale-95 ${
                 isFavorite
                   ? 'bg-rose-950/80 text-rose-400 border border-rose-700/50'
                   : 'bg-stone-950/70 hover:bg-stone-900 text-stone-300 border border-stone-800'
               }`}
             >
-              <Heart className={`w-3.5 h-3.5 ${isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
+              <Heart className={`w-4 h-4 ${isFavorite ? 'fill-rose-500 text-rose-500' : ''}`} />
             </button>
           </div>
         </div>

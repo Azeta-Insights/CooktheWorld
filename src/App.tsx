@@ -12,8 +12,10 @@ import { MyKitchenView } from './components/MyKitchenView';
 import { WorldUnlockModal } from './components/WorldUnlockModal';
 import { AdminConsoleModal } from './components/AdminConsoleModal';
 import { AuthModal } from './components/AuthModal';
+import { FilterDrawerModal } from './components/FilterDrawerModal';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { ActiveTimerOverlay, ActiveTimer } from './components/ActiveTimerOverlay';
-import { Sparkles, Compass, ChefHat, BookOpen, Layers, Shield } from 'lucide-react';
+import { Sparkles, Compass, ChefHat, BookOpen, Layers } from 'lucide-react';
 
 function AppContent() {
   const {
@@ -24,6 +26,7 @@ function AppContent() {
     favorites,
     passport,
     cookingHistory,
+    shoppingList,
     downloadedRecipeIds,
     toggleFavorite,
     recordCookedRecipe,
@@ -40,6 +43,11 @@ function AppContent() {
   const [starterOnly, setStarterOnly] = useState(false);
   const [offlineOnly, setOfflineOnly] = useState(false);
   const [quickTimeFilter, setQuickTimeFilter] = useState<number | null>(null);
+  const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
+  const [selectedMealType, setSelectedMealType] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<'recommended' | 'time' | 'title' | 'country'>('recommended');
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
   // Modals & Drawers state
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -64,18 +72,85 @@ function AppContent() {
     setActiveTimers(prev => [timer, ...prev]);
   };
 
+  // Memoized continent recipe counts
+  const continentCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      'All': ALL_RECIPES.length,
+      'Africa': 0,
+      'Asia': 0,
+      'Europe': 0,
+      'North America': 0,
+      'South America': 0,
+      'Oceania': 0
+    };
+    ALL_RECIPES.forEach(r => {
+      if (counts[r.continent] !== undefined) {
+        counts[r.continent]++;
+      }
+    });
+    return counts;
+  }, []);
+
+  // Compute active filters count
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedContinent !== 'All') count++;
+    if (starterOnly) count++;
+    if (offlineOnly) count++;
+    if (quickTimeFilter !== null) count++;
+    count += selectedDietary.length;
+    if (selectedDifficulty !== 'All') count++;
+    if (selectedMealType !== 'All') count++;
+    if (sortBy !== 'recommended') count++;
+    return count;
+  }, [selectedContinent, starterOnly, offlineOnly, quickTimeFilter, selectedDietary, selectedDifficulty, selectedMealType, sortBy]);
+
+  // Reset all filters
+  const handleResetAllFilters = () => {
+    setSearchQuery('');
+    setSelectedContinent('All');
+    setStarterOnly(false);
+    setOfflineOnly(false);
+    setQuickTimeFilter(null);
+    setSelectedDietary([]);
+    setSelectedDifficulty('All');
+    setSelectedMealType('All');
+    setSortBy('recommended');
+  };
+
+  const handleToggleDietary = (tag: string) => {
+    setSelectedDietary(prev => 
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handleRemoveDietary = (tag: string) => {
+    setSelectedDietary(prev => prev.filter(t => t !== tag));
+  };
+
   // Filter recipes
   const filteredRecipes = useMemo(() => {
+    const effectiveDietary = selectedDietary.length > 0 ? selectedDietary : profile?.preferences?.dietary;
     const options: RecipeFilterOptions = {
       query: searchQuery,
       continent: selectedContinent,
       starterOnly,
       offlineOnly,
       maxCookTime: quickTimeFilter || undefined,
-      dietary: profile?.preferences?.dietary
+      dietary: effectiveDietary && effectiveDietary.length > 0 ? effectiveDietary : undefined,
+      difficulty: selectedDifficulty !== 'All' ? selectedDifficulty : undefined,
+      mealType: selectedMealType !== 'All' ? selectedMealType : undefined,
     };
-    return searchAndFilterRecipes(ALL_RECIPES, options, downloadedRecipeIds);
-  }, [searchQuery, selectedContinent, starterOnly, offlineOnly, quickTimeFilter, profile?.preferences?.dietary, downloadedRecipeIds]);
+    let results = searchAndFilterRecipes(ALL_RECIPES, options, downloadedRecipeIds);
+    if (sortBy === 'time') {
+      results = [...results].sort((a, b) => a.totalTime - b.totalTime);
+    } else if (sortBy === 'title') {
+      results = [...results].sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortBy === 'country') {
+      results = [...results].sort((a, b) => a.country.localeCompare(b.country));
+    }
+    return results;
+  }, [searchQuery, selectedContinent, starterOnly, offlineOnly, quickTimeFilter, selectedDietary, profile?.preferences?.dietary, selectedDifficulty, selectedMealType, sortBy, downloadedRecipeIds]);
 
   // Phase 8: Personalization Engine & Recommendations
   const recommendedRecipes = useMemo(() => {
@@ -136,7 +211,7 @@ function AppContent() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-24 sm:pb-16">
         {currentView === 'cookbook' && (
           <div>
             {/* Hero Section */}
@@ -151,11 +226,21 @@ function AppContent() {
               onToggleOfflineOnly={() => setOfflineOnly(!offlineOnly)}
               quickTimeFilter={quickTimeFilter}
               onSelectTimeFilter={setQuickTimeFilter}
+              selectedDietary={selectedDietary}
+              onRemoveDietary={handleRemoveDietary}
+              selectedDifficulty={selectedDifficulty}
+              onResetDifficulty={() => setSelectedDifficulty('All')}
+              selectedMealType={selectedMealType}
+              onResetMealType={() => setSelectedMealType('All')}
+              onOpenFilterDrawer={() => setIsFilterDrawerOpen(true)}
+              onResetAllFilters={handleResetAllFilters}
+              activeFiltersCount={activeFiltersCount}
               totalFilteredCount={filteredRecipes.length}
+              continentCounts={continentCounts}
             />
 
             {/* Phase 8: Personalized Recommendations Section */}
-            {searchQuery === '' && selectedContinent === 'All' && !starterOnly && !offlineOnly && !quickTimeFilter && recommendedRecipes.length > 0 && (
+            {searchQuery === '' && selectedContinent === 'All' && !starterOnly && !offlineOnly && !quickTimeFilter && selectedDietary.length === 0 && recommendedRecipes.length > 0 && (
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -206,13 +291,7 @@ function AppContent() {
                     Try clearing your search query or removing filters to browse all 300+ global recipes.
                   </p>
                   <button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedContinent('All');
-                      setStarterOnly(false);
-                      setOfflineOnly(false);
-                      setQuickTimeFilter(null);
-                    }}
+                    onClick={handleResetAllFilters}
                     className="px-4 py-2 rounded-xl bg-amber-500 text-stone-950 text-xs font-bold"
                   >
                     Reset Filters
@@ -257,23 +336,62 @@ function AppContent() {
           <MyKitchenView
             onSelectRecipe={(r) => setSelectedRecipe(r)}
             onOpenUnlockModal={() => setIsUnlockOpen(true)}
-            onOpenAdmin={() => setIsAdminOpen(true)}
           />
         )}
       </main>
 
-      {/* Floating AI Chef Trigger Button */}
+      {/* Floating AI Chef Trigger Button (Desktop Only) */}
       <button
         onClick={() => {
           setAiChefInitialPrompt(undefined);
           setIsAIChefOpen(true);
         }}
-        className="fixed bottom-6 left-6 z-40 px-4 py-3 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold text-xs sm:text-sm shadow-2xl shadow-amber-500/30 hover:shadow-amber-500/50 flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95"
+        className="fixed bottom-6 left-6 z-30 hidden sm:flex px-4 py-3 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold text-xs sm:text-sm shadow-2xl shadow-amber-500/30 hover:shadow-amber-500/50 items-center gap-2 transition-all transform hover:scale-105 active:scale-95"
       >
         <Sparkles className="w-4 h-4 fill-stone-950" />
-        <span className="hidden sm:inline">Ask AI Chef</span>
-        <span className="sm:hidden">Chef</span>
+        <span>Ask AI Chef</span>
       </button>
+
+      {/* Mobile Bottom Navigation Bar (Natural Thumb Zone) */}
+      <MobileBottomNav
+        currentView={currentView}
+        onSelectView={(v) => {
+          setCurrentView(v);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+        onOpenAIChef={() => {
+          setAiChefInitialPrompt(undefined);
+          setIsAIChefOpen(true);
+        }}
+        countriesVisitedCount={Object.keys(passport).length}
+        shoppingListCount={shoppingList.filter(i => !i.checked).length}
+        activeTimers={activeTimers}
+      />
+
+      {/* Comprehensive Recipe Filter Drawer / Bottom Sheet */}
+      <FilterDrawerModal
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        totalFilteredCount={filteredRecipes.length}
+        selectedContinent={selectedContinent}
+        onSelectContinent={setSelectedContinent}
+        starterOnly={starterOnly}
+        onToggleStarterOnly={() => setStarterOnly(!starterOnly)}
+        offlineOnly={offlineOnly}
+        onToggleOfflineOnly={() => setOfflineOnly(!offlineOnly)}
+        quickTimeFilter={quickTimeFilter}
+        onSelectTimeFilter={setQuickTimeFilter}
+        selectedDietary={selectedDietary}
+        onToggleDietary={handleToggleDietary}
+        selectedDifficulty={selectedDifficulty}
+        onSelectDifficulty={setSelectedDifficulty}
+        selectedMealType={selectedMealType}
+        onSelectMealType={setSelectedMealType}
+        sortBy={sortBy}
+        onSelectSortBy={setSortBy}
+        onResetAllFilters={handleResetAllFilters}
+        activeFiltersCount={activeFiltersCount}
+      />
 
       {/* Active Kitchen Timers Overlay */}
       <ActiveTimerOverlay
@@ -316,7 +434,6 @@ function AppContent() {
       <WorldUnlockModal
         isOpen={isUnlockOpen}
         onClose={() => setIsUnlockOpen(false)}
-        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
       {/* Admin Console Modal */}
@@ -346,14 +463,7 @@ function AppContent() {
             <span>•</span>
             <span>Offline Ready</span>
             <span>•</span>
-            <button
-              onClick={() => setIsAdminOpen(true)}
-              className="hover:text-amber-400 text-stone-400 flex items-center gap-1 font-medium transition-colors"
-              title="Tester Approvals & Catalog Insights"
-            >
-              <Shield className="w-3.5 h-3.5 text-red-400" />
-              <span>Admin Approvals</span>
-            </button>
+            <span>Paystack ₦2,500 Lifetime</span>
           </div>
         </div>
       </footer>
@@ -368,3 +478,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+

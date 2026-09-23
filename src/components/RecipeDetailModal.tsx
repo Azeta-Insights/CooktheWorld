@@ -819,6 +819,30 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
             </div>
           </div>
         )}
+        {/* Sticky Mobile Action Bar (Natural Thumb Zone) */}
+        <div className="sm:hidden sticky bottom-0 inset-x-0 bg-stone-950/95 backdrop-blur-xl border-t border-stone-800/90 p-3 flex items-center gap-2 z-20 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
+          <button
+            onClick={() => setIsCookingMode(true)}
+            className="flex-1 py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-stone-950 text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 min-h-[44px]"
+          >
+            <Maximize2 className="w-4 h-4" />
+            <span>Cooking Mode</span>
+          </button>
+          <button
+            onClick={() => onAddToShoppingList(recipe)}
+            className="min-w-[44px] min-h-[44px] p-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 hover:text-white flex items-center justify-center active:scale-95"
+            title="Add ingredients to Shopping List"
+          >
+            <ShoppingBag className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onOpenChefWithRecipe(recipe)}
+            className="min-w-[44px] min-h-[44px] p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center active:scale-95"
+            title="Ask AI Chef about this recipe"
+          >
+            <Sparkles className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

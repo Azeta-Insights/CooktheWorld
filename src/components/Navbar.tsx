@@ -45,19 +45,19 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 bg-stone-950/85 backdrop-blur-xl border-b border-stone-800/80 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-4">
+        <div className="flex items-center justify-between h-14 sm:h-20 gap-3 sm:gap-4">
           
           {/* Brand Logo */}
           <div 
             onClick={() => onSelectView('cookbook')}
-            className="flex items-center gap-3 cursor-pointer group select-none"
+            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group select-none"
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
-              <Compass className="w-6 h-6 text-stone-950 stroke-[2.2]" />
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 flex items-center justify-center shadow-md sm:shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform shrink-0">
+              <Compass className="w-4 h-4 sm:w-6 sm:h-6 text-stone-950 stroke-[2.2]" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-serif text-lg sm:text-xl font-bold tracking-tight text-stone-100 group-hover:text-amber-400 transition-colors">
+                <span className="font-serif text-base sm:text-xl font-bold tracking-tight text-stone-100 group-hover:text-amber-400 transition-colors">
                   Cook The World
                 </span>
               </div>
