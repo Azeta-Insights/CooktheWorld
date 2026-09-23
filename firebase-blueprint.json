@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile, preferences, and premium entitlement",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "entitlement": {
+          "type": "object",
+          "properties": {
+            "tier": { "type": "string", "enum": ["free", "premium", "test_premium"] },
+            "source": { "type": "string", "enum": ["default", "purchase", "test", "dev"] },
+            "unlockedAt": { "type": "string" },
+            "paystackReference": { "type": "string" }
+          }
+        },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "dietary": { "type": "array", "items": { "type": "string" } },
+            "allergies": { "type": "array", "items": { "type": "string" } },
+            "favoriteIngredients": { "type": "array", "items": { "type": "string" } },
+            "avoidIngredients": { "type": "array", "items": { "type": "string" } },
+            "preferredCookingTime": { "type": "string" },
+            "spicePreference": { "type": "string" }
+          }
+        },
+        "aiUsage": {
+          "type": "object",
+          "properties": {
+            "totalCount": { "type": "number" },
+            "rollingCount": { "type": "number" },
+            "todayCount": { "type": "number" },
+            "lastUsedAt": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "CookingRecord": {
+      "title": "Cooking Record",
+      "description": "Log of a prepared recipe with rating, notes, and optional photo",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "recipeId": { "type": "string" },
+        "recipeTitle": { "type": "string" },
+        "country": { "type": "string" },
+        "continent": { "type": "string" },
+        "rating": { "type": "number" },
+        "notes": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "cookedAt": { "type": "string" }
+      }
+    },
+    "PremiumRequest": {
+      "title": "Premium Access Request",
+      "description": "Tester request for test premium access",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "requestedAt": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "revoked"] },
+        "reviewedAt": { "type": "string" },
+        "reviewedBy": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "users": {
+      "schema": "User",
+      "description": "Root collection of users"
+    },
+    "premiumRequests": {
+      "schema": "PremiumRequest",
+      "description": "Root collection of test premium requests"
+    }
+  }
+}

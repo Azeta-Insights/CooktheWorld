@@ -1,0 +1,6 @@
+{
+  "name": "Cook The World",
+  "description": "Explore the world. One recipe at a time. Global cookbook with offline cooking, AI Chef, and Food Passport.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

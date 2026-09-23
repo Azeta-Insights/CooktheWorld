@@ -1,0 +1,12 @@
+{
+  "projectId": "cooktheworldapp",
+  "appId": "1:65047850253:web:46062d01da6b55579b5444",
+  "apiKey": "AIzaSyAadw2hRhyL9F2Mivpo0WnQH9jmleUcfII",
+  "authDomain": "cooktheworldapp.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-acafaa41-8ab8-407e-85e5-e51ae1fea3fb",
+  "storageBucket": "cooktheworldapp.firebasestorage.app",
+  "messagingSenderId": "65047850253",
+  "measurementId": "",
+  "oAuthClientId": "65047850253-pmf7slrbt7mclk605vmq5l65fc6p7kv6.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
+}
